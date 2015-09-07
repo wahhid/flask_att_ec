@@ -45,7 +45,7 @@ def show_entries():
     entries = [dict(title=row[0], text=row[1]) for row in cur.fetchall()]
     return render_template('show_entries.html', entries=entries)
 
-@app.route('/createemployee', methods=['GET'])
+@app.route('/api/v1/createemployee', methods=['GET'])
 def create_employee():
     try:
         nik = request.args.get('nik')
@@ -56,17 +56,32 @@ def create_employee():
     except sqlite3.Error, e:
         return jsonify(success=False, message=e.args[0], result=[])
         
-
-
-
-@app.route('/allemployee', methods=['GET'])
+@app.route('/api/v1/allemployee', methods=['GET'])
 def all_employee():
     try:
         cur = g.db.execute('select id, nik, name from employees')
         employees = [dict(id=row[0], nik=row[1], name=row[2]) for row in cur.fetchall()]
-        return jsonify(success=True, message='', result=employees)
+        if employees:
+            return jsonify(success=True, message='', result=employees)
+        else:
+            return jsonify(success=False, message='No Data', result=[])
     except sqlite3.Error, e:
         return jsonify(success=False, message=e.args[0], result=[])
+
+
+@app.route('/api/v1/atttransbydate', methods=['GET'])
+def att_trans_by_date():
+    try:
+        transdatetime = request.args.get('transdate')
+        cur = g.db.execute('select id, employeeid, transtypeid, transdatetime from attendancetrans where date(transdatetime)=?',[transdatetime])
+        atttrans = [dict(id=row[0], employeeid=row[1], transtypeid=row[2], transdatetime=row[3]) for row in cur.fetchall()]
+        if atttrans:
+            return jsonify(success=True, message='', result=atttrans)
+        else:
+            return jsonify(success=False, message='No Data', result=[])
+    except sqlite3.Error, e:
+        return jsonify(success=False, message=e.args[0], result=[])
+
 
 if __name__ == '__main__':
     app.run()
